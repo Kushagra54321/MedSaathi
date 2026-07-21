@@ -1,11 +1,17 @@
 from fastapi import FastAPI, UploadFile, File , HTTPException
 import shutil
 import os
+from app.services.ocr_service import extract_text_from_pdf
+
 app = FastAPI()
+
 @app.get("/")
+
 def home():
     return {"message": "Hello, world"}
+    
 @app.post("/uploadfile/")
+
 async def upload_file(file: UploadFile = File(...)):
 
     allowed_types = [
@@ -28,9 +34,12 @@ async def upload_file(file: UploadFile = File(...)):
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-
+    
+    extracted_text = extract_text_from_pdf(file_path)
+    
     return {
         "message": "File uploaded successfully",
         "filename": file.filename,
-        "saved_path": file_path
+        # "saved_path": file_path,
+        "extracted_text": extracted_text
     }
