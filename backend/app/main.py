@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, File , HTTPException
 import shutil
 import os
 from app.services.ocr_service import extract_text_from_pdf
-
+from app.services.text_cleaner import clean_ocr_text
 app = FastAPI()
 
 @app.get("/")
@@ -36,10 +36,12 @@ async def upload_file(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
     
     extracted_text = extract_text_from_pdf(file_path)
-    
+    cleaned_text = clean_ocr_text(extracted_text)
+
     return {
         "message": "File uploaded successfully",
         "filename": file.filename,
         # "saved_path": file_path,
-        "extracted_text": extracted_text
+        "extracted_text": cleaned_text
+        # "extracted_lines": cleaned_text.splitlines()
     }
