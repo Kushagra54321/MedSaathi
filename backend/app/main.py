@@ -49,12 +49,13 @@ async def upload_file(file: UploadFile = File(...)):
         "validation": validation,
         "error": "The uploaded file does not appear to be a medical document."
     }
-    
+
     return {
     "message": "Medical document validated successfully",
     "filename": file.filename,
     "validation": validation,
     "extracted_text": cleaned_text
+    
     }
 
     # return {
