@@ -3,6 +3,8 @@ import shutil
 import os
 from app.services.ocr_service import extract_text_from_pdf
 from app.services.text_cleaner import clean_ocr_text
+from app.services.medical_validator import validate_medical_document
+
 app = FastAPI()
 
 @app.get("/")
@@ -37,11 +39,28 @@ async def upload_file(file: UploadFile = File(...)):
     
     extracted_text = extract_text_from_pdf(file_path)
     cleaned_text = clean_ocr_text(extracted_text)
+    validation = validate_medical_document(cleaned_text)
 
-    return {
-        "message": "File uploaded successfully",
+    if not validation["is_medical_document"]:
+
+        return {
+        "message": "Invalid document",
         "filename": file.filename,
-        # "saved_path": file_path,
-        "extracted_text": cleaned_text
-        # "extracted_lines": cleaned_text.splitlines()
+        "validation": validation,
+        "error": "The uploaded file does not appear to be a medical document."
     }
+    
+    return {
+    "message": "Medical document validated successfully",
+    "filename": file.filename,
+    "validation": validation,
+    "extracted_text": cleaned_text
+    }
+
+    # return {
+    #     "message": "File uploaded successfully",
+    #     "filename": file.filename,
+    #     # "saved_path": file_path,
+    #     "extracted_text": cleaned_text
+    #     # "extracted_lines": cleaned_text.splitlines()
+    # }
