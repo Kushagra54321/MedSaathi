@@ -8,7 +8,7 @@ app = FastAPI()
 @app.get("/")
 
 def home():
-    return {"message": "Hello, world"}
+    return {"message": "MedSaathi API is running"}
     
 @app.post("/uploadfile/")
 
