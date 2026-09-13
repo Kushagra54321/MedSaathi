@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedSaathi - AI Medical Report Assistant & Native Summarizer</title>
+  <meta name="description" content="MedSaathi AI analyzes medical and blood test reports, detects abnormalities, and provides easy-to-understand summaries in your native language.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Background Glow Orbs -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo-group">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="brand-name">MedSaathi <span class="badge-ai">AI 2.0</span></span>
+          <span class="brand-tagline">Smart Medical Assistant & Multilingual Summarizer</span>
+        </div>
+      </div>
+      <div class="nav-status">
+        <span class="pulse-dot"></span>
+        <span>Medical Intelligence Engine Online</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-wrapper">
+    <!-- Hero / Intro -->
+    <section class="hero-section">
+      <h1 class="hero-title">Understand Your Medical Reports in <span class="gradient-text">Your Own Language</span></h1>
+      <p class="hero-subtitle">Upload your lab report or prescription. MedSaathi extracts every parameter, checks reference ranges, flags critical values, and explains everything simply in Marathi, Hindi, or your preferred language.</p>
+    </section>
+
+    <!-- Upload & Patient Form Card -->
+    <section class="card upload-card" id="uploadSection">
+      <div class="card-header">
+        <h2>Upload Report & Patient Information</h2>
+        <span class="step-tag">Step 1 of 2</span>
+      </div>
+
+      <form id="reportForm" class="patient-form">
+        <!-- File Drag & Drop Zone -->
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="fileInput" name="file" accept=".pdf,image/jpeg,image/png" required hidden>
+          <div class="drop-content" id="dropContent">
+            <div class="upload-icon-circle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <p class="drop-text"><strong>Drag and drop your report here</strong>, or <span class="browse-link">browse file</span></p>
+            <p class="drop-hint">Supports PDF, JPG, PNG (e.g. CBC, Lipid Profile, Kidney/Liver Tests)</p>
+          </div>
+          <div class="file-selected-badge" id="selectedFileBadge" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span id="selectedFileName">report.pdf</span>
+            <button type="button" id="removeFileBtn" class="remove-file-btn">&times;</button>
+          </div>
+        </div>
+
+        <!-- Form Inputs Grid -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="patientName">Patient Name *</label>
+            <input type="text" id="patientName" name="patient_name" placeholder="e.g. Ramesh Patil" required>
+          </div>
+
+          <div class="form-group">
+            <label for="patientAge">Age (Years) *</label>
+            <input type="number" id="patientAge" name="age" min="0" max="130" placeholder="e.g. 45" required>
+          </div>
+
+          <div class="form-group">
+            <label for="patientGender">Gender *</label>
+            <select id="patientGender" name="gender" required>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="doctorName">Doctor / Lab Name (Optional)</label>
+            <input type="text" id="doctorName" name="doctor_name" placeholder="e.g. Dr. Joshi / Metropolis Lab">
+          </div>
+
+          <div class="form-group full-width">
+            <label for="diseaseSymptoms">Current Symptoms or Health Complaints (Optional)</label>
+            <input type="text" id="diseaseSymptoms" name="disease_symptoms" placeholder="e.g. feeling dizzy, fatigue, fever for 3 days">
+            <span class="field-hint">MedSaathi will correlate your symptoms with abnormal test parameters.</span>
+          </div>
+
+          <!-- Native Language Selector Dropdown -->
+          <div class="form-group full-width language-select-group">
+            <label for="preferredLanguage">
+              <span class="icon-lang">🌐</span> Choose Your Native Summary Language *
+            </label>
+            <select id="preferredLanguage" name="preferred_language" class="language-dropdown" required>
+              <option value="" disabled selected>Choose your own language</option>
+              <option value="Hindi">हिन्दी (Hindi)</option>
+              <option value="Marathi">मराठी (Marathi)</option>
+              <option value="English">English</option>
+              <option value="Punjabi">ਪੰਜਾਬੀ (Punjabi)</option>
+              <option value="Gujarati">ગુજરાતી (Gujarati)</option>
+              <option value="Bengali">বাংলা (Bengali)</option>
+              <option value="Telugu">తెలుగు (Telugu)</option>
+              <option value="Tamil">தமிழ் (Tamil)</option>
+              <option value="Kannada">ಕನ್ನಡ (Kannada)</option>
+              <option value="Malayalam">മലയാളം (Malayalam)</option>
+            </select>
+            <span class="field-hint">The complete medical summary will be generated in English AND translated into this language.</span>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="submitBtn" class="btn-primary">
+          <span class="btn-text">Analyze Medical Report</span>
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
+      </form>
+    </section>
+
+    <!-- Loading State Card -->
+    <section class="card loading-card" id="loadingCard" style="display: none;">
+      <div class="loading-spinner"></div>
+      <h3 class="loading-title">Analyzing Your Medical Report...</h3>
+      <p class="loading-subtitle">Please wait while MedSaathi processes your document</p>
+      <div class="loading-steps">
+        <div class="step-item active" id="step1">✓ Extracting text & validating medical document</div>
+        <div class="step-item active" id="step2">✓ Detecting 665+ clinical parameters & reference ranges</div>
+        <div class="step-item active" id="step3">✓ Evaluating risk thresholds & disease mapping</div>
+        <div class="step-item active" id="step4">✓ Generating bilingual plain-language summary & PDF</div>
+      </div>
+    </section>
+
+    <!-- Results Dashboard Section -->
+    <section class="results-wrapper" id="resultsWrapper" style="display: none;">
+      <!-- Patient & Risk Banner -->
+      <div class="card patient-banner-card" id="patientBannerCard">
+        <div class="banner-content">
+          <div class="patient-details">
+            <h2 id="resPatientName">Patient Name</h2>
+            <p class="meta-row">
+              <span id="resAgeGender">45 yrs, Male</span> • 
+              <span id="resDoctor">Dr. Sharma</span> • 
+              <span id="resReportDate">Date: Today</span>
+            </p>
+          </div>
+          <div class="risk-badge-box">
+            <span class="risk-badge" id="overallRiskBadge">ANALYZING</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Emergency Critical Alert Banner (Hidden if normal) -->
+      <div class="critical-alert-banner" id="criticalAlertBanner" style="display: none;">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-body">
+          <h4>CRITICAL MEDICAL ATTENTION REQUIRED</h4>
+          <p id="criticalAlertText">One or more parameters have breached emergency safety thresholds. Please consult a doctor immediately.</p>
+        </div>
+      </div>
+
+      <!-- Parameter Analysis Table Card -->
+      <div class="card table-card">
+        <div class="card-header">
+          <div>
+            <h3>Extracted Laboratory Parameters</h3>
+            <p class="sub-header-text">Values compared against verified clinical reference ranges from Medical Master.</p>
+          </div>
+          <div class="stats-counters" id="statsCounters">
+            <span class="chip chip-total" id="chipTotal">Total: 0</span>
+            <span class="chip chip-normal" id="chipNormal">Normal: 0</span>
+            <span class="chip chip-low" id="chipLow">Low: 0</span>
+            <span class="chip chip-high" id="chipHigh">High: 0</span>
+            <span class="chip chip-crit" id="chipCrit">Critical: 0</span>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="param-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Extracted Value</th>
+                <th>Unit</th>
+                <th>Healthy Reference Range</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="paramTableBody">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Bilingual Summary Section Card -->
+      <div class="card summary-card" id="summaryCard">
+        <div class="summary-header">
+          <div class="summary-title-group">
+            <div class="summary-icon">📖</div>
+            <div>
+              <h3>AI Medical Health Summary & Advice</h3>
+              <p class="sub-header-text">Clear, plain-language explanation of your report findings.</p>
+            </div>
+          </div>
+
+          <!-- Interactive Language Switcher Toggle Buttons -->
+          <div class="language-toggle-wrapper">
+            <button type="button" class="lang-toggle-btn active" id="btnLangEnglish">
+              🇬🇧 English Summary
+            </button>
+            <button type="button" class="lang-toggle-btn" id="btnLangNative">
+              🇮🇳 <span id="nativeBtnLabel">मराठी (Native)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary Display Box -->
+        <div class="summary-content-box" id="summaryContentBox">
+          <div class="summary-rendered" id="summaryRendered">
+            <!-- Rendered Markdown Content -->
+          </div>
+        </div>
+
+        <!-- Action Bar with Download PDF Buttons (English & Native Language) -->
+        <div class="summary-action-bar">
+          <div class="action-info">
+            <p class="pdf-hint">📄 You can download a complete printable PDF version of this report in English and your Native Language.</p>
+          </div>
+          <div class="pdf-btn-group">
+            <a href="#" id="downloadPdfBtnEnglish" class="btn-download btn-download-en" target="_blank">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>Download English PDF</span>
+            </a>
+            <a href="#" id="downloadPdfBtnNative" class="btn-download btn-download-native" target="_blank">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span id="downloadNativeBtnText">Download Native PDF</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- New Report Button -->
+      <div class="center-btn-row">
+        <button type="button" id="analyzeAnotherBtn" class="btn-secondary">
+          ← Analyze Another Medical Report
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>MedSaathi AI Healthcare Assistant • For Educational & Health Literacy Use • Always consult your qualified physician for medical decisions.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -765,4 +765,4 @@ def validate_medical_document(
             matched_metadata,
 
         "message": message
-    }
+    } 

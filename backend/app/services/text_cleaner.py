@@ -27,6 +27,14 @@ def clean_ocr_text(text: str) -> str:
 
         line = re.sub(r"[ \t]+", " ", line)
 
+        # Normalize common OCR unit errors right after numbers (e.g. 96 mgldl -> 96 mg/dl, 96 mg\dl -> 96 mg/dl)
+        line = re.sub(
+            r'(?<=\d)\s*(?P<prefix>mg|mcg|µg|ug|ng|pg|gms|gm|g|mmol)(?:[lI1](?=[A-Za-z])|[\\|.:_-]+)(?P<rest>[A-Za-z%µ0-9^]+)\b',
+            r' \g<prefix>/\g<rest>',
+            line,
+            flags=re.IGNORECASE
+        )
+
         cleaned_lines.append(line)
 
     return "\n".join(cleaned_lines)
