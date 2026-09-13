@@ -241,72 +241,37 @@ function renderResults(data) {
   }
 
   // 5. Dual PDF Download Buttons (English & Native Language)
-  const englishPdfUrl = data.pdf_download_url_english || data.pdf_download_url || "#";
-  const nativePdfUrl = data.pdf_download_url_native || englishPdfUrl;
-
+  const cleanId = data.report_id || "report";
   const langLabelAscii = (bilingual.preferred_language || "Native").replace(/[^\w]/g, "");
-  const enFileName = `MedSaathi_Medical_Report_${data.report_id || "Report"}_English.pdf`;
-  const nativeFileName = `MedSaathi_Medical_Report_${data.report_id || "Report"}_${langLabelAscii}.pdf`;
+  const enFileName = `MedSaathi_Medical_Report_${cleanId}_English.pdf`;
+  const nativeFileName = `MedSaathi_Medical_Report_${cleanId}_${langLabelAscii}.pdf`;
+
+  const englishPdfUrl = data.pdf_download_url_english || data.pdf_download_url || `/api/download-report/${enFileName}?report_id=${cleanId}&lang=en`;
+  const nativePdfUrl = data.pdf_download_url_native || `/api/download-report/${nativeFileName}?report_id=${cleanId}&lang=native`;
+
+  const fullEnUrl = englishPdfUrl.startsWith("http") ? englishPdfUrl : `${API_BASE_URL}${englishPdfUrl}`;
+  const fullNativeUrl = nativePdfUrl.startsWith("http") ? nativePdfUrl : `${API_BASE_URL}${nativePdfUrl}`;
 
   if (downloadPdfBtnEnglish) {
-    const fullEnUrl = englishPdfUrl.startsWith("http") ? englishPdfUrl : `${API_BASE_URL}${englishPdfUrl}`;
     downloadPdfBtnEnglish.href = fullEnUrl;
     downloadPdfBtnEnglish.setAttribute("download", enFileName);
-    downloadPdfBtnEnglish.onclick = (e) => {
-      e.preventDefault();
-      downloadPdfBlob(fullEnUrl, enFileName);
-    };
+    downloadPdfBtnEnglish.removeAttribute("target");
+    downloadPdfBtnEnglish.onclick = null;
   }
 
   if (downloadPdfBtnNative) {
     if (bilingual.language_code && bilingual.language_code !== "en") {
-      const fullNativeUrl = nativePdfUrl.startsWith("http") ? nativePdfUrl : `${API_BASE_URL}${nativePdfUrl}`;
       downloadPdfBtnNative.style.display = "inline-flex";
       downloadPdfBtnNative.href = fullNativeUrl;
       downloadPdfBtnNative.setAttribute("download", nativeFileName);
+      downloadPdfBtnNative.removeAttribute("target");
+      downloadPdfBtnNative.onclick = null;
       if (downloadNativeBtnText) {
         downloadNativeBtnText.textContent = `Download ${currentNativeLabel} PDF`;
       }
-      downloadPdfBtnNative.onclick = (e) => {
-        e.preventDefault();
-        downloadPdfBlob(fullNativeUrl, nativeFileName);
-      };
     } else {
       downloadPdfBtnNative.style.display = "none";
     }
-  }
-}
-
-// Reliable PDF Downloader: Creates an in-memory blob with explicit filename and .pdf extension
-async function downloadPdfBlob(url, filename) {
-  try {
-    const safeFilename = (filename || "MedSaathi_Medical_Report.pdf")
-      .replace(/[^\w\d\-_\.]/g, "_")
-      .replace(/_+/g, "_");
-    const finalFilename = safeFilename.endsWith(".pdf") ? safeFilename : `${safeFilename}.pdf`;
-
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const buffer = await res.arrayBuffer();
-    const blob = new Blob([buffer], { type: "application/pdf" });
-    const blobUrl = window.URL.createObjectURL(blob);
-    
-    const tempLink = document.createElement("a");
-    tempLink.style.display = "none";
-    tempLink.href = blobUrl;
-    tempLink.setAttribute("download", finalFilename);
-    document.body.appendChild(tempLink);
-    tempLink.click();
-    
-    setTimeout(() => {
-      if (tempLink.parentNode) {
-        document.body.removeChild(tempLink);
-      }
-      window.URL.revokeObjectURL(blobUrl);
-    }, 2000);
-  } catch (err) {
-    console.warn("Direct blob download fallback to direct URL:", err);
-    window.open(url, "_blank");
   }
 }
 
