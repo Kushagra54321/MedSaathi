@@ -33,6 +33,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Disable browser caching for frontend static files during development
+# This prevents '304 Not Modified' and ensures changes in index.html, style.css, app.js show instantly
+from fastapi import Request
+@app.middleware("http")
+async def add_no_cache_headers(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/ui") or request.url.path.endswith((".html", ".css", ".js")):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
 # Mount frontend directory for easy serving
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")

@@ -233,9 +233,12 @@ function renderResults(data) {
 
   nativeBtnLabel.textContent = `${currentNativeLabel} Summary`;
 
-  // Default view: English summary is displayed first by default.
-  // The user can click the native language button anytime to switch to their chosen regional language.
-  showSummary("english");
+  // Display native summary by default if a regional language was selected
+  if (bilingual.language_code && bilingual.language_code !== "en") {
+    showSummary("native");
+  } else {
+    showSummary("english");
+  }
 
   // 5. Dual PDF Download Buttons (English & Native Language)
   const englishPdfUrl = data.pdf_download_url_english || data.pdf_download_url || "#";
@@ -352,3 +355,202 @@ analyzeAnotherBtn.addEventListener("click", () => {
   resetToUploadForm();
   window.scrollTo({ top: 0, behavior: "smooth" });
 });
+
+// --------------------------------------------------------------------------
+// Navigation & Mobile Drawer
+// --------------------------------------------------------------------------
+const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+const mobileNavDrawer = document.getElementById("mobileNavDrawer");
+const navLinks = document.querySelectorAll(".nav-link, .mobile-link, .hero-cta-group a");
+
+if (mobileMenuBtn && mobileNavDrawer) {
+  mobileMenuBtn.addEventListener("click", () => {
+    mobileNavDrawer.classList.toggle("open");
+  });
+}
+
+// Smooth scroll & mobile drawer auto-close
+navLinks.forEach(link => {
+  link.addEventListener("click", (e) => {
+    const targetId = link.getAttribute("href");
+    if (targetId && targetId.startsWith("#")) {
+      const targetEl = document.querySelector(targetId);
+      if (targetEl) {
+        e.preventDefault();
+        if (mobileNavDrawer && mobileNavDrawer.classList.contains("open")) {
+          mobileNavDrawer.classList.remove("open");
+        }
+        targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        
+        // Update active desktop nav link
+        document.querySelectorAll(".nav-link").forEach(nl => nl.classList.remove("active"));
+        const matchingDesktop = document.querySelector(`.nav-link[href="${targetId}"]`);
+        if (matchingDesktop) matchingDesktop.classList.add("active");
+      }
+    }
+  });
+});
+
+// --------------------------------------------------------------------------
+// FAQ Accordion Interactivity
+// --------------------------------------------------------------------------
+const faqItems = document.querySelectorAll(".faq-item");
+
+faqItems.forEach(item => {
+  const questionBtn = item.querySelector(".faq-question");
+  if (questionBtn) {
+    questionBtn.addEventListener("click", () => {
+      const isOpen = item.classList.contains("active");
+      // Close all other items
+      faqItems.forEach(i => i.classList.remove("active"));
+      // If it was not open, open it
+      if (!isOpen) {
+        item.classList.add("active");
+      }
+    });
+  }
+});
+
+// --------------------------------------------------------------------------
+// Authentication Modal & Profile Session Management
+// --------------------------------------------------------------------------
+const authModal = document.getElementById("authModal");
+const authCloseBtn = document.getElementById("authCloseBtn");
+const navLoginBtn = document.getElementById("navLoginBtn");
+const navSignupBtn = document.getElementById("navSignupBtn");
+const mobileLoginBtn = document.getElementById("mobileLoginBtn");
+const mobileSignupBtn = document.getElementById("mobileSignupBtn");
+
+const tabSignIn = document.getElementById("tabSignIn");
+const tabSignUp = document.getElementById("tabSignUp");
+const signInForm = document.getElementById("signInForm");
+const signUpForm = document.getElementById("signUpForm");
+const authModalTitle = document.getElementById("authModalTitle");
+const authModalSubtitle = document.getElementById("authModalSubtitle");
+
+const authButtons = document.getElementById("authButtons");
+const userProfileBadge = document.getElementById("userProfileBadge");
+const navUserName = document.getElementById("navUserName");
+const navLogoutBtn = document.getElementById("navLogoutBtn");
+
+function openAuthModal(mode = "signin") {
+  if (!authModal) return;
+  if (mobileNavDrawer && mobileNavDrawer.classList.contains("open")) {
+    mobileNavDrawer.classList.remove("open");
+  }
+  authModal.style.display = "flex";
+  switchAuthTab(mode);
+}
+
+function closeAuthModal() {
+  if (authModal) authModal.style.display = "none";
+}
+
+function switchAuthTab(mode) {
+  if (mode === "signup") {
+    tabSignUp.classList.add("active");
+    tabSignIn.classList.remove("active");
+    signUpForm.style.display = "block";
+    signInForm.style.display = "none";
+    authModalTitle.textContent = "Create Your Account";
+    authModalSubtitle.textContent = "Join thousands of patients taking control of their medical health literacy.";
+  } else {
+    tabSignIn.classList.add("active");
+    tabSignUp.classList.remove("active");
+    signInForm.style.display = "block";
+    signUpForm.style.display = "none";
+    authModalTitle.textContent = "Welcome to MedSaathi";
+    authModalSubtitle.textContent = "Sign in to track your medical report history and doctor consultations.";
+  }
+}
+
+// Modal Trigger Listeners
+if (navLoginBtn) navLoginBtn.addEventListener("click", () => openAuthModal("signin"));
+if (navSignupBtn) navSignupBtn.addEventListener("click", () => openAuthModal("signup"));
+if (mobileLoginBtn) mobileLoginBtn.addEventListener("click", () => openAuthModal("signin"));
+if (mobileSignupBtn) mobileSignupBtn.addEventListener("click", () => openAuthModal("signup"));
+if (authCloseBtn) authCloseBtn.addEventListener("click", closeAuthModal);
+
+// Close on background backdrop click
+if (authModal) {
+  authModal.addEventListener("click", (e) => {
+    if (e.target === authModal) closeAuthModal();
+  });
+}
+
+// Close on Escape key
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && authModal && authModal.style.display === "flex") {
+    closeAuthModal();
+  }
+});
+
+// Tab Switch Click Listeners
+if (tabSignIn) tabSignIn.addEventListener("click", () => switchAuthTab("signin"));
+if (tabSignUp) tabSignUp.addEventListener("click", () => switchAuthTab("signup"));
+
+// Sign In Form Submission
+if (signInForm) {
+  signInForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const email = document.getElementById("loginEmail").value.trim();
+    const user = {
+      name: email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1),
+      email: email
+    };
+    localStorage.setItem("medsaathi_user", JSON.stringify(user));
+    updateAuthProfileUI();
+    closeAuthModal();
+    alert(`Welcome back, ${user.name}! You are now signed in to MedSaathi.`);
+  });
+}
+
+// Sign Up Form Submission
+if (signUpForm) {
+  signUpForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = document.getElementById("signupName").value.trim();
+    const email = document.getElementById("signupEmail").value.trim();
+    const user = {
+      name: name || email.split("@")[0],
+      email: email
+    };
+    localStorage.setItem("medsaathi_user", JSON.stringify(user));
+    updateAuthProfileUI();
+    closeAuthModal();
+    alert(`Account created successfully! Welcome to MedSaathi, ${user.name}.`);
+  });
+}
+
+// Logout Listener
+if (navLogoutBtn) {
+  navLogoutBtn.addEventListener("click", () => {
+    localStorage.removeItem("medsaathi_user");
+    updateAuthProfileUI();
+    alert("You have been signed out.");
+  });
+}
+
+// Update Profile UI from LocalStorage
+function updateAuthProfileUI() {
+  const savedUser = localStorage.getItem("medsaathi_user");
+  if (savedUser && authButtons && userProfileBadge && navUserName) {
+    try {
+      const user = JSON.parse(savedUser);
+      authButtons.style.display = "none";
+      userProfileBadge.style.display = "inline-flex";
+      navUserName.textContent = user.name || "Patient";
+    } catch {
+      localStorage.removeItem("medsaathi_user");
+    }
+  } else if (authButtons && userProfileBadge) {
+    authButtons.style.display = "flex";
+    userProfileBadge.style.display = "none";
+  }
+}
+
+// Initialize User Profile State on page load
+document.addEventListener("DOMContentLoaded", () => {
+  updateAuthProfileUI();
+});
+updateAuthProfileUI();
