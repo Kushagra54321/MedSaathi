@@ -8,12 +8,16 @@ POPPLER_PATH = r"C:\poppler\poppler-26.02.0\Library\bin"
 
 
 def extract_text_from_pdf(pdf_path: str) -> str:
-
-    images = convert_from_path(
-        pdf_path,
-        dpi=200,
-        poppler_path=POPPLER_PATH
-    )
+    lower_path = pdf_path.lower()
+    if lower_path.endswith((".png", ".jpg", ".jpeg", ".webp", ".bmp")):
+        from PIL import Image
+        images = [Image.open(pdf_path).convert("RGB")]
+    else:
+        images = convert_from_path(
+            pdf_path,
+            dpi=200,
+            poppler_path=POPPLER_PATH
+        )
 
     full_text = []
 

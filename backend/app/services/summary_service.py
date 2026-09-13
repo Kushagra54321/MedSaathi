@@ -3,6 +3,7 @@ import re
 from typing import Dict, Any, List, Optional
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
+from app.services.translation_service import translate_markdown_summary
 
 # Load environment variables
 load_dotenv()
@@ -685,7 +686,7 @@ REQUIRED CONTENT FOR EACH SECTION:
 
 Remember: Be compassionate, practical, and clear. Empower the patient with understanding and hope!"""
 
-        response = model.generate_content(prompt)
+        response = model.generate_content(prompt, request_options={"timeout": 6.0})
         if response and response.text:
             return response.text.strip()
     except Exception as e:
@@ -704,8 +705,9 @@ def generate_bilingual_medical_summary(
 ) -> Dict[str, Any]:
     """
     Main orchestrator that produces both English and Native Language summaries.
-    Uses Google Gemini 3.6 Flash when GEMINI_API_KEY is active, with seamless
-    automatic fallback to the local clinical intelligence engine if offline.
+    Executes a SINGLE Gemini LLM call for the English medical report, and translates it
+    to the target Indic language via high-speed Google Translate.
+    Saves 50% Gemini API quota, halves processing latency, and includes seamless local fallbacks.
     """
     lang_key = preferred_language.strip().lower()
     lang_info = SUPPORTED_LANGUAGES.get(lang_key, SUPPORTED_LANGUAGES["marathi"])
@@ -713,7 +715,7 @@ def generate_bilingual_medical_summary(
     lang_label = lang_info["label"]
     lang_native_label = lang_info["native"]
 
-    # 1. Generate English Summary via Gemini LLM (with fallback)
+    # 1. Single LLM Call: Generate English Summary via Gemini LLM (with fallback)
     english_summary = _call_gemini_summary(
         patient_meta, parameters, clinical_insights, summary_stats, "English"
     )
@@ -722,14 +724,17 @@ def generate_bilingual_medical_summary(
             patient_meta, parameters, clinical_insights, summary_stats
         )
 
-    # 2. Generate Native Language Summary via Gemini LLM (with fallback)
+    # 2. Native Language Summary: Google Translate Pipeline (Fast, Preserves Markdown & Free Quota)
     if lang_code == "en":
         native_summary = english_summary
     else:
-        native_summary = _call_gemini_summary(
-            patient_meta, parameters, clinical_insights, summary_stats, lang_label
-        )
-        if not native_summary:
+        try:
+            print(f"[SummaryService] Translating English summary to {lang_label} ({lang_code}) via Google Translate Pipeline...")
+            native_summary = translate_markdown_summary(english_summary, lang_code)
+            if not native_summary or not native_summary.strip():
+                raise ValueError("Translation returned empty result.")
+        except Exception as err:
+            print(f"[SummaryService] Native translation failed ({err}). Falling back to local clinical engine.")
             native_summary = build_native_summary(
                 lang_code, patient_meta, parameters, clinical_insights, summary_stats
             )
