@@ -192,9 +192,9 @@ async def upload_file(
         "message": "Medical document validated and analyzed successfully",
         "filename": file.filename,
         "report_id": report_id,
-        "pdf_download_url": f"/download-pdf/{report_id}?lang=en",
-        "pdf_download_url_english": f"/download-pdf/{report_id}?lang=en",
-        "pdf_download_url_native": f"/download-pdf/{report_id}?lang=native" if has_native_pdf else f"/download-pdf/{report_id}?lang=en",
+        "pdf_download_url": f"/download-pdf/{report_id}.pdf?lang=en",
+        "pdf_download_url_english": f"/download-pdf/{report_id}.pdf?lang=en",
+        "pdf_download_url_native": f"/download-pdf/{report_id}.pdf?lang=native" if has_native_pdf else f"/download-pdf/{report_id}.pdf?lang=en",
         "validation": validation,
         "user_provided_metadata": user_provided_metadata,
         "metadata": metadata,
@@ -207,38 +207,57 @@ async def upload_file(
 
 
 @app.get("/download-pdf/{report_id}")
+@app.get("/download-pdf/{report_id}.pdf")
+@app.get("/api/download-pdf/{report_id}")
+@app.get("/api/download-pdf/{report_id}.pdf")
 async def download_pdf(report_id: str, lang: Optional[str] = "en"):
     """Allows patient or doctor to download either English or Native Language PDF report."""
+    clean_report_id = report_id.replace(".pdf", "").strip()
     lang_lower = (lang or "en").lower().strip()
     
     # Check if native language PDF requested
     if lang_lower in ["native", "hi", "mr", "pa", "gu", "bn", "te", "ta", "kn", "ml"]:
-        pdf_filename = f"MedSaathi_Report_{report_id}_native.pdf"
+        pdf_filename = f"MedSaathi_Report_{clean_report_id}_native.pdf"
         pdf_path = os.path.join(REPORTS_DIR, pdf_filename)
         if os.path.exists(pdf_path):
+            target_filename = f"MedSaathi_Medical_Report_{clean_report_id}_Native.pdf"
             return FileResponse(
                 pdf_path,
                 media_type="application/pdf",
-                filename=f"MedSaathi_Medical_Report_{report_id}_Native.pdf"
+                filename=target_filename,
+                headers={
+                    "Content-Disposition": f'attachment; filename="{target_filename}"',
+                    "Content-Type": "application/pdf"
+                }
             )
 
     # English / Standard PDF
-    pdf_filename_en = f"MedSaathi_Report_{report_id}_en.pdf"
+    pdf_filename_en = f"MedSaathi_Report_{clean_report_id}_en.pdf"
     pdf_path_en = os.path.join(REPORTS_DIR, pdf_filename_en)
     if os.path.exists(pdf_path_en):
+        target_filename = f"MedSaathi_Medical_Report_{clean_report_id}_English.pdf"
         return FileResponse(
             pdf_path_en,
             media_type="application/pdf",
-            filename=f"MedSaathi_Medical_Report_{report_id}_English.pdf"
+            filename=target_filename,
+            headers={
+                "Content-Disposition": f'attachment; filename="{target_filename}"',
+                "Content-Type": "application/pdf"
+            }
         )
 
     # Legacy fallback
-    legacy_path = os.path.join(REPORTS_DIR, f"MedSaathi_Report_{report_id}.pdf")
+    legacy_path = os.path.join(REPORTS_DIR, f"MedSaathi_Report_{clean_report_id}.pdf")
     if os.path.exists(legacy_path):
+        target_filename = f"MedSaathi_Medical_Report_{clean_report_id}.pdf"
         return FileResponse(
             legacy_path,
             media_type="application/pdf",
-            filename=f"MedSaathi_Medical_Report_{report_id}.pdf"
+            filename=target_filename,
+            headers={
+                "Content-Disposition": f'attachment; filename="{target_filename}"',
+                "Content-Type": "application/pdf"
+            }
         )
 
     raise HTTPException(status_code=404, detail="Report PDF not found")
