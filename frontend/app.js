@@ -244,8 +244,9 @@ function renderResults(data) {
   const englishPdfUrl = data.pdf_download_url_english || data.pdf_download_url || "#";
   const nativePdfUrl = data.pdf_download_url_native || englishPdfUrl;
 
+  const langLabelAscii = (bilingual.preferred_language || "Native").replace(/[^\w]/g, "");
   const enFileName = `MedSaathi_Medical_Report_${data.report_id || "Report"}_English.pdf`;
-  const nativeFileName = `MedSaathi_Medical_Report_${data.report_id || "Report"}_${currentNativeLabel || "Native"}.pdf`;
+  const nativeFileName = `MedSaathi_Medical_Report_${data.report_id || "Report"}_${langLabelAscii}.pdf`;
 
   if (downloadPdfBtnEnglish) {
     const fullEnUrl = englishPdfUrl.startsWith("http") ? englishPdfUrl : `${API_BASE_URL}${englishPdfUrl}`;
@@ -279,23 +280,33 @@ function renderResults(data) {
 // Reliable PDF Downloader: Creates an in-memory blob with explicit filename and .pdf extension
 async function downloadPdfBlob(url, filename) {
   try {
+    const safeFilename = (filename || "MedSaathi_Medical_Report.pdf")
+      .replace(/[^\w\d\-_\.]/g, "_")
+      .replace(/_+/g, "_");
+    const finalFilename = safeFilename.endsWith(".pdf") ? safeFilename : `${safeFilename}.pdf`;
+
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const blob = await res.blob();
+    const buffer = await res.arrayBuffer();
+    const blob = new Blob([buffer], { type: "application/pdf" });
     const blobUrl = window.URL.createObjectURL(blob);
+    
     const tempLink = document.createElement("a");
     tempLink.style.display = "none";
     tempLink.href = blobUrl;
-    tempLink.download = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
+    tempLink.setAttribute("download", finalFilename);
     document.body.appendChild(tempLink);
     tempLink.click();
+    
     setTimeout(() => {
-      document.body.removeChild(tempLink);
+      if (tempLink.parentNode) {
+        document.body.removeChild(tempLink);
+      }
       window.URL.revokeObjectURL(blobUrl);
-    }, 1500);
+    }, 2000);
   } catch (err) {
     console.warn("Direct blob download fallback to direct URL:", err);
-    window.location.href = url;
+    window.open(url, "_blank");
   }
 }
 

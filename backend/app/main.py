@@ -54,6 +54,9 @@ os.makedirs(REPORTS_DIR, exist_ok=True)
 if os.path.exists(FRONTEND_DIR):
     app.mount("/ui", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 
+if os.path.exists(REPORTS_DIR):
+    app.mount("/reports", StaticFiles(directory=REPORTS_DIR), name="reports")
+
 
 @app.get("/")
 def home():
@@ -192,9 +195,9 @@ async def upload_file(
         "message": "Medical document validated and analyzed successfully",
         "filename": file.filename,
         "report_id": report_id,
-        "pdf_download_url": f"/download-pdf/{report_id}.pdf?lang=en",
-        "pdf_download_url_english": f"/download-pdf/{report_id}.pdf?lang=en",
-        "pdf_download_url_native": f"/download-pdf/{report_id}.pdf?lang=native" if has_native_pdf else f"/download-pdf/{report_id}.pdf?lang=en",
+        "pdf_download_url": f"/reports/MedSaathi_Report_{report_id}_en.pdf",
+        "pdf_download_url_english": f"/reports/MedSaathi_Report_{report_id}_en.pdf",
+        "pdf_download_url_native": f"/reports/MedSaathi_Report_{report_id}_native.pdf" if has_native_pdf else f"/reports/MedSaathi_Report_{report_id}_en.pdf",
         "validation": validation,
         "user_provided_metadata": user_provided_metadata,
         "metadata": metadata,
