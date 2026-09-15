@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import shutil
@@ -60,11 +60,18 @@ if os.path.exists(REPORTS_DIR):
 
 @app.get("/")
 def home():
+    if os.path.exists(FRONTEND_DIR):
+        return RedirectResponse(url="/ui/")
     return {
         "message": "MedSaathi API is running",
         "frontend_ui": "/ui/",
         "version": "2.0 (Phase 2 Multilingual AI Engine)"
     }
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "MedSaathi API"}
 
 
 @app.post("/uploadfile/")
