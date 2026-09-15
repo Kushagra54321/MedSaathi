@@ -67,7 +67,7 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     # 1. If it's a PDF, first attempt fast native extraction via PyMuPDF / pdfplumber
     if not is_image:
         try:
-            import fitz  # PyMuPDF
+            import fitz  # type: ignore
             doc = fitz.open(pdf_path)
             pages_text = [page.get_text() for page in doc]
             full_pdf_text = "\n".join(pages_text).strip()
@@ -77,7 +77,7 @@ def extract_text_from_pdf(pdf_path: str) -> str:
             logger.warning(f"PyMuPDF native extraction failed: {e}")
 
         try:
-            import pdfplumber
+            import pdfplumber  # type: ignore
             with pdfplumber.open(pdf_path) as pdf:
                 pages_text = [page.extract_text() or "" for page in pdf.pages]
                 full_pdf_text = "\n".join(pages_text).strip()
