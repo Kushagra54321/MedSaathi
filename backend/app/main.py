@@ -1,17 +1,24 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from fastapi.responses import FileResponse, RedirectResponse
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-import shutil
+import sys
 import os
+import shutil
 import uuid
 from typing import Optional
 from dotenv import load_dotenv
 
+# Ensure 'backend' directory is in sys.path so 'app' package is found from root
+BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
+
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 # Load environment variables (from .env and backend/.env)
 load_dotenv()
-load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env"))
-load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
+load_dotenv(os.path.join(os.path.dirname(BACKEND_DIR), ".env"))
+load_dotenv(os.path.join(BACKEND_DIR, ".env"))
 
 from app.services.ocr_service import extract_text_from_pdf
 from app.services.text_cleaner import clean_ocr_text
