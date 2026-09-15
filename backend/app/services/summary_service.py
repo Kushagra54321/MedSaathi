@@ -522,7 +522,7 @@ def build_native_summary(
     return "\n".join(lines)
 
 
-def _call_gemini_summary(
+def _call_llm_summary(
     patient_meta: Dict[str, Any],
     parameters: List[Dict[str, Any]],
     clinical_insights: Dict[str, Any],
@@ -530,18 +530,15 @@ def _call_gemini_summary(
     target_language: str
 ) -> Optional[str]:
     """
-    Calls Google Gemini (gemini-3.6-flash) to craft an empathetic, highly structured,
-    plain-language medical report summary with 100% native language immersion.
+    Calls Groq (ultra-fast LLM engine) or Gemini to craft an empathetic, highly structured,
+    plain-language medical report summary.
     """
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    gemini_api_key = os.getenv("GEMINI_API_KEY")
+    if not groq_api_key and not gemini_api_key:
         return None
 
     try:
-        import google.generativeai as genai
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-3.6-flash")
-
         name = patient_meta.get("name", "Patient")
         age = patient_meta.get("age", "N/A")
         gender = patient_meta.get("gender", "N/A")
@@ -686,14 +683,51 @@ REQUIRED CONTENT FOR EACH SECTION:
 
 Remember: Be compassionate, practical, and clear. Empower the patient with understanding and hope!"""
 
-        response = model.generate_content(prompt, request_options={"timeout": 6.0})
-        if response and response.text:
-            return response.text.strip()
+        # 1. Primary: Groq ultra-fast LLM
+        if groq_api_key:
+            try:
+                from groq import Groq
+                client = Groq(api_key=groq_api_key)
+                candidate_models = ["groq/compound-mini", "openai/gpt-oss-120b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+                for model_name in candidate_models:
+                    try:
+                        chat_resp = client.chat.completions.create(
+                            model=model_name,
+                            messages=[
+                                {"role": "system", "content": "You are MedSaathi AI, a compassionate, expert AI medical assistant."},
+                                {"role": "user", "content": prompt}
+                            ],
+                            temperature=0.3,
+                            max_tokens=2500,
+                            timeout=15.0
+                        )
+                        if chat_resp and chat_resp.choices and chat_resp.choices[0].message.content:
+                            return chat_resp.choices[0].message.content.strip()
+                    except Exception as mod_err:
+                        continue
+            except Exception as groq_err:
+                print(f"[WARNING] Groq LLM failed ({groq_err}). Checking fallbacks...")
+
+        # 2. Secondary: Gemini Fallback
+        if gemini_api_key:
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=gemini_api_key)
+                model = genai.GenerativeModel("gemini-1.5-flash")
+                response = model.generate_content(prompt, request_options={"timeout": 6.0})
+                if response and response.text:
+                    return response.text.strip()
+            except Exception as gem_err:
+                print(f"[WARNING] Gemini LLM fallback failed ({gem_err}).")
+
     except Exception as e:
-        print(f"[WARNING] Gemini LLM summary generation failed ({e}). Falling back to local clinical engine.")
+        print(f"[WARNING] AI summary generation failed ({e}). Falling back to local clinical engine.")
         return None
 
     return None
+
+# Alias for backwards compatibility
+_call_gemini_summary = _call_llm_summary
 
 
 def generate_bilingual_medical_summary(
