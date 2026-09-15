@@ -195,9 +195,9 @@ async def upload_file(
         "message": "Medical document validated and analyzed successfully",
         "filename": file.filename,
         "report_id": report_id,
-        "pdf_download_url": f"/reports/MedSaathi_Report_{report_id}_en.pdf",
-        "pdf_download_url_english": f"/reports/MedSaathi_Report_{report_id}_en.pdf",
-        "pdf_download_url_native": f"/reports/MedSaathi_Report_{report_id}_native.pdf" if has_native_pdf else f"/reports/MedSaathi_Report_{report_id}_en.pdf",
+        "pdf_download_url": f"/api/download-report/MedSaathi_Medical_Report_{report_id}_English.pdf?report_id={report_id}&lang=en",
+        "pdf_download_url_english": f"/api/download-report/MedSaathi_Medical_Report_{report_id}_English.pdf?report_id={report_id}&lang=en",
+        "pdf_download_url_native": f"/api/download-report/MedSaathi_Medical_Report_{report_id}_Hindi.pdf?report_id={report_id}&lang=native" if has_native_pdf else f"/api/download-report/MedSaathi_Medical_Report_{report_id}_English.pdf?report_id={report_id}&lang=en",
         "validation": validation,
         "user_provided_metadata": user_provided_metadata,
         "metadata": metadata,
@@ -209,21 +209,36 @@ async def upload_file(
     }
 
 
+@app.get("/api/download-report/{filename}")
+@app.get("/api/download-report")
 @app.get("/download-pdf/{report_id}")
 @app.get("/download-pdf/{report_id}.pdf")
 @app.get("/api/download-pdf/{report_id}")
 @app.get("/api/download-pdf/{report_id}.pdf")
-async def download_pdf(report_id: str, lang: Optional[str] = "en"):
+async def download_pdf(
+    report_id: Optional[str] = None,
+    filename: Optional[str] = None,
+    lang: Optional[str] = "en"
+):
     """Allows patient or doctor to download either English or Native Language PDF report."""
-    clean_report_id = report_id.replace(".pdf", "").strip()
+    raw_id = report_id or ""
+    if not raw_id and filename:
+        import re
+        match = re.search(r"([0-9a-fA-F]{12})", filename)
+        if match:
+            raw_id = match.group(1)
+        else:
+            raw_id = filename.replace(".pdf", "").split("_")[-1]
+
+    clean_report_id = raw_id.replace(".pdf", "").strip()
     lang_lower = (lang or "en").lower().strip()
     
     # Check if native language PDF requested
-    if lang_lower in ["native", "hi", "mr", "pa", "gu", "bn", "te", "ta", "kn", "ml"]:
+    if lang_lower in ["native", "hi", "mr", "pa", "gu", "bn", "te", "ta", "kn", "ml"] or (filename and ("Native" in filename or "Hindi" in filename)):
         pdf_filename = f"MedSaathi_Report_{clean_report_id}_native.pdf"
         pdf_path = os.path.join(REPORTS_DIR, pdf_filename)
         if os.path.exists(pdf_path):
-            target_filename = f"MedSaathi_Medical_Report_{clean_report_id}_Native.pdf"
+            target_filename = f"MedSaathi_Medical_Report_{clean_report_id}_Hindi.pdf"
             return FileResponse(
                 pdf_path,
                 media_type="application/pdf",
