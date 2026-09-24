@@ -352,6 +352,9 @@ def generate_medical_pdf_report(
         # Clean inline markdown bold formatting into ReportLab HTML tags
         formatted_line = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', line)
         formatted_line = re.sub(r'\*(.*?)\*', r'<i>\1</i>', formatted_line)
+        
+        # ReportLab Paragraph parser requires self-closing <br/> tags
+        formatted_line = formatted_line.replace("<br>", "<br/>").replace("</br>", "<br/>")
 
         if formatted_line.startswith("### "):
             clean_head = formatted_line.replace("### ", "").strip()
