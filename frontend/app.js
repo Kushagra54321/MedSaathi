@@ -121,7 +121,12 @@ reportForm.addEventListener("submit", async (e) => {
       body: formData
     });
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      throw new Error("Server encountered an internal error. Please check the uploaded file and try again.");
+    }
 
     if (!response.ok) {
       throw new Error(data.detail || data.error || "Failed to analyze document.");

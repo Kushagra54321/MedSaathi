@@ -44,6 +44,13 @@ def extract_with_gemini_vision(file_path: str) -> str:
             return response.text if response and response.text else ""
         elif lower.endswith(".pdf"):
             uploaded = genai.upload_file(path=file_path)
+            import time
+            while uploaded.state.name == "PROCESSING":
+                time.sleep(2)
+                uploaded = genai.get_file(uploaded.name)
+            if uploaded.state.name == "FAILED":
+                raise ValueError("PDF processing failed on Gemini API")
+            
             prompt = "Extract all text, patient details, lab test results, numerical values, and reference ranges from this medical report exactly as presented."
             response = model.generate_content([uploaded, prompt])
             return response.text if response and response.text else ""
@@ -96,11 +103,13 @@ def extract_text_from_pdf(pdf_path: str) -> str:
                 from PIL import Image
                 images = [Image.open(pdf_path).convert("RGB")]
             else:
-                from pdf2image import convert_from_path
-                kwargs = {"dpi": 200}
-                if POPPLER_PATH and os.path.exists(POPPLER_PATH):
-                    kwargs["poppler_path"] = POPPLER_PATH
-                images = convert_from_path(pdf_path, **kwargs)
+                import fitz
+                doc = fitz.open(pdf_path)
+                for page in doc:
+                    pix = page.get_pixmap(dpi=200)
+                    from PIL import Image
+                    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                    images.append(img)
 
             full_text = []
             for image in images:
