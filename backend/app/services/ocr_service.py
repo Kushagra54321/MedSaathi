@@ -93,7 +93,12 @@ def extract_text_from_pdf(pdf_path: str) -> str:
         except Exception as e:
             logger.warning(f"pdfplumber extraction failed: {e}")
 
-    # 2. If it's an image or a scanned PDF, try EasyOCR
+    # 2. Try Gemini Vision OCR first (highly resilient for low-quality/scanned documents)
+    gemini_text = extract_with_gemini_vision(pdf_path)
+    if gemini_text and len(gemini_text) > 40:
+        return gemini_text
+
+    # 3. Fallback: EasyOCR
     reader = get_easyocr_reader()
     if reader is not None:
         try:
@@ -157,10 +162,5 @@ def extract_text_from_pdf(pdf_path: str) -> str:
                 return ocr_res
         except Exception as e:
             logger.warning(f"EasyOCR extraction failed: {e}")
-
-    # 3. Fallback: Gemini Vision OCR (cloud and scanned document resilient)
-    gemini_text = extract_with_gemini_vision(pdf_path)
-    if gemini_text:
-        return gemini_text
 
     return ""
